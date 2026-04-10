@@ -66,11 +66,15 @@ When your n8n workflow scrapes a job from LinkedIn or Indeed, push it to DevPuls
 }
 ```
 
-### 2. Receiving Matches (Backend -> n8n)
-DevPulse will automatically score and match ingested jobs against user preferences. When it finds matches, it triggers a webhook in n8n.
-- Create a **Webhook Node** in n8n listening for `POST` requests.
+### 2. Matching Engine (Internal Scheduled Execution)
+DevPulse strictly isolates job ingestion from job matching. The matching process operates inside the backend as an **Internal Controlled Batch Scheduler** powered by a native backend process running periodically (e.g., every 1 hour). 
+
+ n8n DOES NOT schedule or trigger this matching process directly! You only let DevPulse run automatically. 
+
+### 3. Receiving Matches (Backend -> n8n Webhook)
+Create a **Webhook Node** in n8n listening for `POST` requests.
 - Set your DevPulse `.env` variable `N8N_WEBHOOK_URL` to match this n8n node URL.
-- The payload n8n will receive from DevPulse looks like this:
+- When the DevPulse internal batch matching system finds valid developer assignments, it automatically fires the payload over to your node:
 
 ```json
 {

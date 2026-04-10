@@ -10,7 +10,6 @@ from app.api.jobs_router import router as jobs_router # 🔹 Import Jobs router
 
 app = FastAPI(title="DevPulse Backend")
 
-
 # 🔄 Startup event
 @app.on_event("startup")
 async def startup():

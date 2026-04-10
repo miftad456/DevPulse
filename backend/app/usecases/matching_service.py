@@ -7,20 +7,18 @@ class JobUseCase:
         self.job_repo = job_repo
         self.user_repo = user_repo
 
-    async def match_jobs_for_user(self, user_id: str) -> List[Dict]:
+    def score_jobs_for_user(self, user: Dict, jobs: List[Dict]) -> List[Dict]:
         """
-        Fetches user preferences and matches against available jobs, scoring them.
+        Matches pre-fetched user preferences against pre-fetched jobs using scoring logic.
         """
-        user = await self.user_repo.get_user_preferences(user_id)
-        if not user or not user.get("onboarding_completed"):
-            raise ValueError("User preferences not found or onboarding incomplete")
+        if not user.get("onboarding_completed"):
+            return []
 
         pref_role = (user.get("job_role") or "").lower()
         pref_level = (user.get("experience_level") or "").lower()
         pref_type = (user.get("job_type") or "").lower()
         pref_skills = [s.lower() for s in user.get("skills", [])]
 
-        jobs = await self.job_repo.get_jobs_for_matching()
         matched_jobs = []
 
         for job in jobs:
@@ -29,7 +27,7 @@ class JobUseCase:
             # Exact role match
             if pref_role and pref_role in job["title"].lower():
                 score += 3
-            elif pref_role and pref_role in job.get("job_role", job["title"]).lower():
+            elif pref_role and (job.get("job_role") and pref_role in job["job_role"].lower()):
                 score += 3
 
             # Level match
@@ -46,15 +44,13 @@ class JobUseCase:
                 if skill in job_stack:
                     score += 1
             
-            # Remove ObjectId before returning
-            job["_id"] = str(job["_id"])
-            
-            # Include score
-            job["match_score"] = score
-            
-            # Only include jobs that have a reasonable match (e.g. score > 0)
+            # Include score if > 0
             if score > 0:
-                matched_jobs.append(job)
+                # create copy so we don't modify the source for other users
+                job_dict = dict(job)
+                job_dict["_id"] = str(job_dict["_id"])
+                job_dict["match_score"] = score
+                matched_jobs.append(job_dict)
 
         # Sort jobs by match_score descending
         matched_jobs.sort(key=lambda x: x["match_score"], reverse=True)

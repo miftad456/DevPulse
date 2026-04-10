@@ -13,6 +13,8 @@ class Job(BaseModel):
     source: str
     url: str
     created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    status: str = "pending"
 
 class JobIngestRequest(BaseModel):
     title: str

@@ -20,3 +20,8 @@ class OnboardingRepository:
         """Fetches the user document to retrieve preferences."""
         user = await self.collection.find_one({"_id": ObjectId(user_id)})
         return user
+
+    async def get_all_onboarded_users(self):
+        """Fetches all users who have completed onboarding for batch matching."""
+        cursor = self.collection.find({"onboarding_completed": True})
+        return await cursor.to_list(length=None)
